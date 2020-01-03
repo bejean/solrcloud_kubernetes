@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zkensemble
+spec:
+  selector:
+    matchLabels:
+      app: zookeeper-app # has to match .spec.template.metadata.labels
+  serviceName: zkensemble
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: zookeeper-app # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      restartPolicy: Always
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: target_zkensemble
+                operator: In 
+                values:
+                - "yes"       
+      containers:
+      - name: zookeeper
+        image: centos:8
+        imagePullPolicy: IfNotPresent
+        args:
+        - "/bin/sh"
+        - "-c"
+        - "yum update -y && yum install -y which nmap sysstat iotop nmap-ncat net-tools bind-utils lsof wget git java-11-openjdk java-11-openjdk-devel && \
+           cd /tmp && git clone https://github.com/bejean/solrcloud_kubernetes.git && cd solrcloud_kubernetes && git checkout dev_test && \
+           chmod +x resources/zookeeper/zookeeper_install.sh && ./resources/zookeeper/zookeeper_install.sh && \
+           /etc/init.d/zookeeper start && /etc/init.d/node_exporter start && /etc/init.d/zk_exporter start && \
+           tail -f /var/log/lastlog"
+        livenessProbe:
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          timeoutSeconds: 5
+          exec:
+            command: ['/bin/bash', '-c', 'echo "ruok" | nc -w 2 localhost 2181 | grep imok']
+        readinessProbe:
+          initialDelaySeconds: 180
+          periodSeconds: 10
+          timeoutSeconds: 5
+          exec:
+            command: ['/bin/bash', '-c', 'echo "ruok" | nc -w 2 localhost 2181 | grep imok']
+        volumeMounts:
+        - name: zkensemble-vol-claim
+          mountPath: /store
+        env:
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: MY_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: ZOO_APP_DIR
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: zooAppDir
+          - name: ZOO_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: zooVersion
+          - name: ZOO_DATA_DIR
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: zooDataDir
+          - name: ZOO_SERVERS
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: zooServers
+          - name: ZOO_LOG4J_PROP
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: zooLog4jProp
+          - name: ZOO_XMX
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: zooXmx
+          - name: GO_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: goVersion
+          - name: NODE_EXPORTER_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: nodeExporterVersion
+          - name: JMX_EXPORTER_VERSION
+            valueFrom:
+              configMapKeyRef:
+                name: zkensemble-config
+                key: jmxExporterVersion
+  volumeClaimTemplates:
+  - metadata:
+      name: zkensemble-vol-claim
+    spec:
+      storageClassName: zkensemble-storage
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi
+          
+          
+          

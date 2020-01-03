@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: solrcloud
+  labels:
+    app: solr-app
+spec:
+  clusterIP: None
+  selector:
+    app: solr-app

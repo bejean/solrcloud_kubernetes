@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zkensemble-vol1
+spec:
+  capacity:
+    storage: 5Gi
+  #volumeMode: Block
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: zkensemble-storage
+  local:
+    path: /k8s-storage/zkensemble-vol
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: target_zkensemble
+          operator: In 
+          values:
+          - "yes"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zkensemble-vol2
+spec:
+  capacity:
+    storage: 5Gi
+  #volumeMode: Block
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: zkensemble-storage
+  local:
+    path: /k8s-storage/zkensemble-vol
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: target_zkensemble
+          operator: In 
+          values:
+          - "yes" 
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: zkensemble-vol3
+spec:
+  capacity:
+    storage: 5Gi
+  #volumeMode: Block
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: zkensemble-storage
+  local:
+    path: /k8s-storage/zkensemble-vol
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: target_zkensemble
+          operator: In 
+          values:
+          - "yes" 
